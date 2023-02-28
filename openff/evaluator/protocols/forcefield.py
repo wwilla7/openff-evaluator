@@ -50,8 +50,8 @@ class BaseBuildSystem(Protocol, abc.ABC):
     )
     coordinate_file_path = InputAttribute(
         docstring="The file path to the PDB coordinate file which defines the "
-        "topology of the system to which the force field parameters "
-        "will be assigned.",
+                  "topology of the system to which the force field parameters "
+                  "will be assigned.",
         type_hint=str,
         default_value=UNDEFINED,
     )
@@ -546,15 +546,15 @@ class BuildLigParGenSystem(TemplateBuildSystem):
         charge_model = "cm1abcc"
 
         if (
-            force_field_source.preferred_charge_model
-            == LigParGenForceFieldSource.ChargeModel.CM1A_1_14
-            or not np.isclose(total_charge, 0.0)
+                force_field_source.preferred_charge_model
+                == LigParGenForceFieldSource.ChargeModel.CM1A_1_14
+                or not np.isclose(total_charge, 0.0)
         ):
             charge_model = "cm1a"
 
             if (
-                force_field_source.preferred_charge_model
-                != LigParGenForceFieldSource.ChargeModel.CM1A_1_14
+                    force_field_source.preferred_charge_model
+                    != LigParGenForceFieldSource.ChargeModel.CM1A_1_14
             ):
                 logger.warning(
                     f"The preferred charge model is {str(force_field_source.preferred_charge_model)}, "
@@ -721,7 +721,7 @@ class BuildLigParGenSystem(TemplateBuildSystem):
                 custom_force.addExclusion(index_a, index_b)
 
                 if not np.isclose(
-                    epsilon.value_in_unit(openmm_unit.kilojoule_per_mole), 0.0
+                        epsilon.value_in_unit(openmm_unit.kilojoule_per_mole), 0.0
                 ):
                     sigma_14 = np.sqrt(
                         lennard_jones_parameters[index_a][0]
@@ -952,19 +952,19 @@ class BuildTLeapSystem(TemplateBuildSystem):
                 file.write(tleap_output.decode())
 
             if not os.path.isfile(prmtop_file_name) or not os.path.isfile(
-                rst7_file_name
+                    rst7_file_name
             ):
                 raise RuntimeError("tleap failed to execute.")
 
             with open("leap.log", "r") as file:
                 if re.search(
-                    "Exiting LEaP: Errors = 0; Warnings = 0; Notes = 0.", file.read()
+                        "Exiting LEaP: Errors = 0; Warnings = 0; Notes = 0.", file.read()
                 ):
                     # normal exiting log
                     pass
                 elif re.search(
-                    "ERROR|WARNING|Warning|duplicate|FATAL|Could|Fatal|Error",
-                    file.read(),
+                        "ERROR|WARNING|Warning|duplicate|FATAL|Could|Fatal|Error",
+                        file.read(),
                 ):
                     raise RuntimeError("tleap failed to execute.")
 
@@ -1052,3 +1052,60 @@ class BuildTLeapSystem(TemplateBuildSystem):
             )
 
         super(BuildTLeapSystem, self)._execute(directory, available_resources)
+
+
+@workflow_protocol()
+class BuildMPIDSystem(BaseBuildSystem):
+    """Parametrise a set of molecules to use with MPID OpenMM plugin
+    """
+
+    def _execute(self, directory, available_resources):
+
+        from openff.toolkit.topology import Molecule
+        import mpidplugin
+        from openmm import unit as openmm_unit
+
+        pdb_file = app.PDBFile(self.coordinate_file_path)
+
+        force_field_source = ForceFieldSource.from_json(self.force_field_path)
+
+        force_field = force_field_source.to_force_field()
+
+        # Create the molecules to parameterize from the input substance.
+        unique_molecules = []
+
+        for component in self.substance.components:
+
+            molecule = Molecule.from_smiles(smiles=component.smiles)
+
+            if molecule is None:
+                raise ValueError(f"{component} could not be converted to a Molecule")
+
+            unique_molecules.append(molecule)
+
+        system = force_field.createSystem(
+            pdb_file.topology,
+            nonbondedMethod=app.PME,
+            nonbondedCutoff=8 * openmm_unit.angstrom,
+            constraints=app.HBonds,
+            defaultTholeWidth=8,
+            polarization="direct",
+        )
+
+        if system is None:
+            raise RuntimeError(
+                "Failed to create a system from the specified topology and molecules."
+            )
+
+        system_xml = openmm.XmlSerializer.serialize(system)
+        system_path = os.path.join(directory, "system.xml")
+
+        with open(system_path, "w") as file:
+            file.write(system_xml)
+
+        self.parameterized_system = ParameterizedSystem(
+            substance=self.substance,
+            force_field=force_field_source,
+            topology_path=self.coordinate_file_path,
+            system_path=system_path,
+        )

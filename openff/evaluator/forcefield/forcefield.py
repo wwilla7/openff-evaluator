@@ -1,6 +1,7 @@
 """
 A collection of wrappers around commonly employed force fields.
 """
+import os
 import abc
 from enum import Enum
 
@@ -219,11 +220,11 @@ class LigParGenForceFieldSource(ForceFieldSource):
         return self._download_url
 
     def __init__(
-        self,
-        preferred_charge_model=ChargeModel.CM1A_1_14_LBCC,
-        cutoff=9.0 * unit.angstrom,
-        request_url="",
-        download_url="",
+            self,
+            preferred_charge_model=ChargeModel.CM1A_1_14_LBCC,
+            cutoff=9.0 * unit.angstrom,
+            request_url="",
+            download_url="",
     ):
         """Constructs a new LigParGenForceFieldSource object
 
@@ -261,3 +262,80 @@ class LigParGenForceFieldSource(ForceFieldSource):
         self._cutoff = state["cutoff"]
         self._request_url = state["request_url"]
         self._download_url = state["download_url"]
+
+
+class MPIDForceFieldSource(ForceFieldSource):
+    """Mimic SMIRNOFFForceFieldSource behavior
+    """
+
+    def __init__(self, inner_xml=None):
+        """Constructs a new SmirnoffForceFieldSource object
+
+        Parameters
+        ----------
+        inner_xml: str, optional
+            A string containing the xml representation of the force field.
+        """
+        self._inner_xml = inner_xml
+
+    def to_force_field(self):
+        """
+        Returns the OpenMM force field created from this source.
+
+        Returns
+        -------
+        openmm.app.ForceField
+            The created force field.
+
+        """
+        from openmm.app import ForceField as omm_forcefield
+
+        with open("tmp.xml", "w") as f:
+            f.write(self._inner_xml)
+
+        ommff = omm_forcefield("tmp.xml")
+        os.remove("tmp.xml")
+        return ommff
+
+    @classmethod
+    def from_string(cls, force_field):
+        """Creates a new `MPIDForceFieldSource` for force field string
+
+        Parameters
+        ----------
+        force_field: openmm.app.ForceField
+            The existing force field.
+
+        Returns
+        -------
+        MPIDForceFieldSource
+            The created object.
+        """
+
+        return cls(force_field)
+
+    @classmethod
+    def from_path(cls, file_path):
+        """Creates a new `MPIDForceFieldSource` from the file path
+
+        Parameters
+        ----------
+        file_path: str
+            The file path to the force field object. This may also be the
+            name of a file which can be loaded via an entry point.
+
+        Returns
+        -------
+        MPIDForceFieldSource
+            The created object.
+        """
+        with open(file_path, "r") as f:
+            force_field = f.read()
+
+        return cls.from_string(force_field)
+
+    def __getstate__(self):
+        return {"inner_xml": self._inner_xml}
+
+    def __setstate__(self, state):
+        self._inner_xml = state["inner_xml"]

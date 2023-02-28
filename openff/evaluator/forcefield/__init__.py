@@ -3,6 +3,7 @@ from .forcefield import (
     LigParGenForceFieldSource,
     SmirnoffForceFieldSource,
     TLeapForceFieldSource,
+    MPIDForceFieldSource
 )
 from .gradients import ParameterGradient, ParameterGradientKey
 
