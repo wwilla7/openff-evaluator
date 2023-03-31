@@ -137,7 +137,11 @@ def disable_pbc(system):
             if mpidplugin.MPIDForce.isinstance(force):
                 mpidforce = mpidplugin.MPIDForce.cast(force)
                 mpidforce.setNonbondedMethod(0)
+<<<<<<< Updated upstream
                 logger.debug("Disable PBC for MPID Force!")
+=======
+                logger.info("Disable PBC for MPID Force!")
+>>>>>>> Stashed changes
 
         if not isinstance(force, (openmm.NonbondedForce, openmm.CustomNonbondedForce)):
             continue
@@ -145,8 +149,12 @@ def disable_pbc(system):
         force.setNonbondedMethod(
             0
         )  # NoCutoff = 0, NonbondedMethod.CutoffNonPeriodic = 1
+<<<<<<< Updated upstream
         logger.debug("Disable PBC for {}!".format(force.__class__.__name__))
 
+=======
+        logger.info("Disable PBC for {}!".format(force.__class__.__name__))
+>>>>>>> Stashed changes
 
 def system_subset(
     parameter_key: ParameterGradientKey,

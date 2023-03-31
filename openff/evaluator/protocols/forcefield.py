@@ -16,6 +16,7 @@ import requests
 from openff.units import unit
 from openff.units.openmm import to_openmm
 from openmm import app
+import openmm.unit as openmm_unit
 
 from openff.evaluator.attributes import UNDEFINED
 from openff.evaluator.forcefield import (
@@ -1063,7 +1064,10 @@ class BuildMPIDSystem(BaseBuildSystem):
 
         from openff.toolkit.topology import Molecule
         import mpidplugin
+<<<<<<< Updated upstream
         from openmm import unit as openmm_unit
+=======
+>>>>>>> Stashed changes
 
         pdb_file = app.PDBFile(self.coordinate_file_path)
 
@@ -1093,6 +1097,10 @@ class BuildMPIDSystem(BaseBuildSystem):
         )
 
         if system is None:
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
             raise RuntimeError(
                 "Failed to create a system from the specified topology and molecules."
             )

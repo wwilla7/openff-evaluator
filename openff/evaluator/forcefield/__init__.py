@@ -14,4 +14,5 @@ __all__ = [
     TLeapForceFieldSource,
     ParameterGradient,
     ParameterGradientKey,
+    MPIDForceFieldSource
 ]

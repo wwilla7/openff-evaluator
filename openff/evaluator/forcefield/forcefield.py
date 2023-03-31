@@ -3,6 +3,7 @@ A collection of wrappers around commonly employed force fields.
 """
 import os
 import abc
+import os
 from enum import Enum
 
 from openff.units import unit
@@ -290,7 +291,11 @@ class MPIDForceFieldSource(ForceFieldSource):
         """
         from openmm.app import ForceField as omm_forcefield
 
+<<<<<<< Updated upstream
         with open("tmp.xml", "w") as f:
+=======
+        with open("tmp.xml", "w")as f:
+>>>>>>> Stashed changes
             f.write(self._inner_xml)
 
         ommff = omm_forcefield("tmp.xml")
@@ -329,7 +334,11 @@ class MPIDForceFieldSource(ForceFieldSource):
         MPIDForceFieldSource
             The created object.
         """
+<<<<<<< Updated upstream
         with open(file_path, "r") as f:
+=======
+        with open(file_path, "r")as f:
+>>>>>>> Stashed changes
             force_field = f.read()
 
         return cls.from_string(force_field)
